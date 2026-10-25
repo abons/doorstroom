@@ -14,7 +14,7 @@ no build. Dutch UI. Started 2026-10-25. Decisions: `design.md` → `docs/besluit
 | `web/osm.js` | Overpass (3 endpoints in turn, Cache API), Locatieserver, tile URLs, `DEMO` |
 | `web/demo/amersfoort.json` | OSM extract; the in-app demo **and** the real-data fixture of `test.mjs` |
 | `test.mjs` | `node test.mjs` — run after any change to `net.js`/`sim.js`/`meet.js`/`bewerk.js` |
-| `serve.mjs` | static server for `web/` on 127.0.0.1:**8095** |
+| `serve.mjs` | static server for `web/` on 127.0.0.1:**8095**; phone: `tailscale serve --bg --https=8447` → https://axel-pc.tailb59455.ts.net:8447 (tailnet only, never funnel; 2026-10-25) |
 
 ## Rules
 
