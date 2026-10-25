@@ -50,7 +50,7 @@ function spelModus(aan) {
   document.body.classList.toggle('met-paneel', aan);
   $('simKnoppen').hidden = !aan; $('drukteVak').hidden = !aan;
   $('laad').hidden = aan; $('demo').hidden = aan;
-  T.maat();
+  kop();
 }
 
 function huidigKader() {
@@ -179,18 +179,35 @@ function planMeting(ookVoor = false) {
   clearTimeout(meetTimer);
   meetTimer = setTimeout(meetAlles, 500);
 }
+// Meten in een worker (module-worker); waar dat niet kan op de hoofdthread in brokjes.
+let werker = null;
+function meetLos(kaart, routes, opties, voortgang) {
+  werker?.terminate(); werker = null;
+  let w;
+  try { w = new Worker('meet-worker.js', { type: 'module' }); } catch { return meetScenario(kaart, routes, opties, voortgang); }
+  werker = w;
+  return new Promise((klaar) => {
+    w.onmessage = ({ data }) => {
+      if (data.f != null) { if (voortgang(data.f) === false) { w.terminate(); klaar(null); } return; }
+      w.terminate(); if (werker === w) werker = null; klaar(data.klaar);
+    };
+    w.onerror = (e) => { e.preventDefault(); w.terminate(); klaar(meetScenario(kaart, routes, opties, voortgang)); };
+    w.postMessage({ kaart, routes, opties });
+  });
+}
+
 async function meetAlles() {
   const gen = ++meetGen;
   const routes = st.routes.filter((r) => r.B).map((r) => ({ id: r.id, A: r.A, B: r.B }));
   const opties = { drukte };
   const toon = (wat) => (f) => { if (gen !== meetGen) return false; meetVoortgang = { wat, f }; meetStatus(); };
   if (!voor) {
-    const v = await meetScenario(JSON.parse(basis), routes, opties, toon('vóór'));
+    const v = await meetLos(JSON.parse(basis), routes, opties, toon('vóór'));
     if (gen !== meetGen || !v) return;
     voor = v;
   }
   if (begroting.length) {
-    const n = await meetScenario(st.kaart, routes, opties, toon('na'));
+    const n = await meetLos(st.kaart, routes, opties, toon('na'));
     if (gen !== meetGen || !n) return;
     na = n;
   } else na = null;
@@ -588,9 +605,12 @@ function herstel(d) {
 }
 
 // ---------- start ----------
-window.addEventListener('resize', () => T.maat());
+// Hoogte van de bovenbalk (loopt op een telefoon over meerdere regels) bepaalt waar kaart en paneel beginnen.
+function kop() { document.documentElement.style.setProperty('--kop', $('balk').offsetHeight + 'px'); T.maat(); }
+window.addEventListener('resize', kop);
+document.querySelector('.score').addEventListener('click', () => { if (innerWidth <= 760) { document.body.classList.toggle('paneel-klein'); T.maat(); } });
 bijTegelGeladen(() => {});
-T.maat(); bron();
+kop(); bron();
 const vorig = lees('ds-scenario');
 if (vorig) { try { herstel(vorig); } catch { verkennen(); } } else spelModus(false);
 requestAnimationFrame(lus);

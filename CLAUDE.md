@@ -25,7 +25,7 @@ no build. Dutch UI. Started 2026-10-25. Decisions: `design.md` → `docs/besluit
   that. Single runs still differ a few % on no-op edits (measured 2026-10-25) → 3 seeds + `RUIS` thresholds.
 - ⚠️ **Overpass is slow and flaky** (2026-10-25: 33 s for a 1.5 km² area; kumi/mail.ru mirrors timed out,
   overpass-api.de answers 406 to curl but works from a browser). Use the Demo for UI work.
-- The simulation runs on the main thread, not in a WebWorker — see `docs/besluiten/hoofdthread.md`.
+- The live simulation runs on the main thread (`docs/besluiten/hoofdthread.md`); before/after measuring runs in `web/meet-worker.js` (a phone froze on it, 2026-10-25).
 - Costs are game values (`kosten.js` header). Never present them as CROW figures or quotes.
 - Service worker `web/sw.js` is network-first; bump `VERSIE` when the shell file list changes.
 - Not Android: no emulator row. Testing on the phone means the browser — claim the device first.

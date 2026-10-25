@@ -31,13 +31,13 @@ select { background: #222b36; border: 1px solid var(--rand); border-radius: 8px;
 .drukte input { width: 90px; }
 .drukte b { color: var(--tekst); min-width: 40px; font-weight: 500; }
 
-main { position: fixed; inset: 52px 0 0 0; }
+main { position: fixed; inset: var(--kop, 52px) 0 0 0; }
 #doek { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
 #doek.tekenen { cursor: crosshair; }
 #melding { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); background: rgba(22,28,36,.95); border: 1px solid var(--rand); border-radius: 10px; padding: 10px 16px; max-width: 90%; }
 #bron { position: absolute; left: 6px; bottom: 4px; font-size: 11px; color: #9aa6b2; text-shadow: 0 0 3px #000; pointer-events: none; }
 
-#paneel { position: fixed; top: 52px; right: 0; bottom: 0; width: 360px; overflow-y: auto; background: var(--paneel); border-left: 1px solid var(--rand); z-index: 4; padding: 10px 12px 24px; }
+#paneel { position: fixed; top: var(--kop, 52px); right: 0; bottom: 0; width: 360px; overflow-y: auto; background: var(--paneel); border-left: 1px solid var(--rand); z-index: 4; padding: 10px 12px 24px; }
 body.met-paneel main { right: 360px; }
 #paneel section { margin-bottom: 14px; }
 #paneel h2 { font-size: 14px; margin: 0 0 6px; }
@@ -84,7 +84,14 @@ body.met-paneel main { right: 360px; }
   .zoek { flex: 1 1 100%; }
   .tussen { display: none; }
   .drukte input { width: 70px; }
-  main { top: 96px; }
-  #paneel { top: auto; left: 0; width: auto; height: 42vh; border-left: none; border-top: 1px solid var(--rand); }
-  body.met-paneel main { right: 0; bottom: 42vh; }
+  #balk { gap: 6px; }
+  #balk button, #balk select { padding: 4px 7px; }
+  .drukte { font-size: 12px; }
+  #paneel { top: auto; left: 0; width: auto; height: 40vh; border-left: none; border-top: 1px solid var(--rand); padding-top: 8px; }
+  body.met-paneel main { right: 0; bottom: 40vh; }
+  body.paneel-klein #paneel { height: 86px; overflow: hidden; }
+  body.met-paneel.paneel-klein main { bottom: 86px; }
+  .score { cursor: pointer; }
+  .score::after { content: '▾'; margin-left: auto; color: var(--stil); font-size: 18px; }
+  body.paneel-klein .score::after { content: '▴'; }
 }

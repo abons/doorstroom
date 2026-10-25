@@ -6,6 +6,6 @@
 - **VRI instellen**: max-groen per fase, fasen samenvoegen/splitsen.
 - **Afslagverboden uit OSM** (`type=restriction`-relaties) importeren; nu staan alle afslagen open.
 - **Rijstrookwissel** op de link (nu kiest een auto alleen bij het oprijden).
-- Telefoon-layout nagelopen in de browser? Nog niet (alleen desktop 2026-10-25).
+- Telefoon: layout nagelopen in een 390 px-frame (2026-10-25), nog niet op een echte telefoon bevestigd dat hij niet meer vastloopt.
 - PNG-iconen voor de PWA (nu alleen `icon.svg`).
 - Publiceren (GitHub Pages / landingspagina)? Vraag aan user — pas bij publicatie op `Apps/apps.js`.

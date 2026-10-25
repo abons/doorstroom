@@ -27,7 +27,7 @@ export function maakTekenaar(canvas) {
   let W = 0, H = 0, dpr = 1;
 
   function maat() {
-    dpr = window.devicePixelRatio || 1;
+    dpr = Math.min(2, window.devicePixelRatio || 1); // 3× op telefoons kost veel en ziet er niet beter uit
     W = canvas.clientWidth; H = canvas.clientHeight;
     canvas.width = Math.round(W * dpr); canvas.height = Math.round(H * dpr);
   }
