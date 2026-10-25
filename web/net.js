@@ -256,6 +256,7 @@ function voorrang(N, m1, m2, links) {
 }
 
 // VRI's: knopen met ctrl 'vri' die via korte wegvakken (< 45 m) aan elkaar zitten vormen één regelaar.
+// Langs een rotonde niet: daar is elke ingang een eigen regelaar (ring en ingang om beurten).
 // Aanrijlinks (van buiten de groep) krijgen een fase; tegenover elkaar liggende richtingen delen een fase.
 // De lichten zelf (verkeersafhankelijk) regelt sim.js.
 function bouwRegelaars(net) {
@@ -269,7 +270,7 @@ function bouwRegelaars(net) {
       const k = stapel.pop();
       for (const li of [...nodes[k].inn, ...nodes[k].uit]) {
         const L = links[li], ander = L.from === k ? L.to : L.from;
-        if (L.len < 45 && nodes[ander].ctrl === 'vri' && !groep.has(ander)) { groep.set(ander, net.regelaars.length); leden.push(ander); stapel.push(ander); }
+        if (L.len < 45 && !L.rotonde && nodes[ander].ctrl === 'vri' && !groep.has(ander)) { groep.set(ander, net.regelaars.length); leden.push(ander); stapel.push(ander); }
       }
     }
     const lid = new Set(leden);

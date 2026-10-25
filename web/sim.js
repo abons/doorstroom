@@ -275,6 +275,23 @@ function idm(auto, v0, gap, dv) {
   return auto.a * (1 - (v / Math.max(v0, 0.1)) ** 4 - (sStar / g) ** 2);
 }
 
+// Bezetting van de ring waar link N in ligt (0..1): de ringstukken vind je door rotonde-bewegingen te volgen.
+function ringVol(sim, N) {
+  const { links, moves } = sim.net;
+  if (!N.ring) {
+    const ring = [N], gezien = new Set([N.i]);
+    for (let L = N; ;) {
+      const vervolg = L.uitMoves.map((mi) => links[moves[mi].to]).find((x) => x.rotonde);
+      if (!vervolg || gezien.has(vervolg.i)) break;
+      ring.push(vervolg); gezien.add(vervolg.i); L = vervolg;
+    }
+    for (const L of ring) L.ring = ring;
+  }
+  let autos = 0, ruimte = 0;
+  for (const L of N.ring) { ruimte += L.len * L.lanes; for (const b of L.banen) autos += b.length; }
+  return (autos * (LEN + S0)) / ruimte;
+}
+
 // Mag de voorste auto op zijn link de kruising op? Zet ook auto.volgBaan.
 function magGaan(sim, auto, L, m) {
   const { links, moves } = sim.net;
@@ -286,6 +303,9 @@ function magGaan(sim, auto, L, m) {
   if (auto.volgBaan < 0 || auto.volgBaan >= N.lanes) auto.volgBaan = kiesBaan(N, soortNa(sim, auto, auto.ri + 1));
   const staart = N.banen[auto.volgBaan].at(-1);
   if (staart && staart.x < LEN + S0 + 1 && !(sim.net.links[m.to].len < 10 && staart.v > 2)) return false; // kruising niet blokkeren
+  // Een ring met lichten liep helemaal vol en dan vast (ringverkeer staat voor rood, de ingangen vullen elk gat).
+  // Dus bij een geregelde ingang alleen de ring op als de hele ring hoogstens half vol staat (2026-10-25).
+  if (licht && !L.rotonde && N.rotonde && ringVol(sim, N) > 0.5) return false;
   for (const ni of m.conflict) if (sim.t - sim.laatstePas[ni] < BEZET) return false; // er rijdt net iemand over de kruising
   const rotonde = sim.net.nodes[m.node].ctrl === 'rotonde' || L.rotonde === false && links[m.to].rotonde;
   for (const ni of m.wijktVoor) {

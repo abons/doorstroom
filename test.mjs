@@ -169,6 +169,32 @@ await test('rotonde wordt een ring: tegen de klok in, wijkt bij oprijden, beter 
   assert.ok(rr >= vr * 0.98, `ring ${rr} vs voorrang ${vr} per uur`);
 });
 
+await test('rotonde op gescheiden rijbanen: één ring om alle vier de knopen, lichten per ingang', () => {
+  // Twee wegen met gescheiden rijbanen (eenrichting, 12 m uit elkaar) kruisen: vier knopen in een vierkant.
+  const k = maak(
+    { a: [-6, -6, 'vri'], b: [6, -6, 'vri'], c: [6, 6, 'vri'], d: [-6, 6, 'vri'],
+      n1: [-6, -400, 'rand'], n2: [6, -400, 'rand'], z1: [-6, 400, 'rand'], z2: [6, 400, 'rand'],
+      w1: [-400, -6, 'rand'], w2: [-400, 6, 'rand'], o1: [400, -6, 'rand'], o2: [400, 6, 'rand'] },
+    [['n1', 'a', 'primary', 50, 2, 0], ['a', 'd', 'primary', 50, 2, 0], ['d', 'z1', 'primary', 50, 2, 0],
+     ['z2', 'c', 'primary', 50, 2, 0], ['c', 'b', 'primary', 50, 2, 0], ['b', 'n2', 'primary', 50, 2, 0],
+     ['o1', 'b', 'primary', 50, 2, 0], ['b', 'a', 'primary', 50, 2, 0], ['a', 'w1', 'primary', 50, 2, 0],
+     ['w2', 'd', 'primary', 50, 2, 0], ['d', 'c', 'primary', 50, 2, 0], ['c', 'o2', 'primary', 50, 2, 0]],
+  );
+  assert.deepEqual(B.kruispuntVan(k, 'a').sort(), ['a', 'b', 'c', 'd']);
+  assert.equal(B.standaardStroken(k, 'a'), 2);
+  const r = B.maakRotonde(k, 'a', { stroken: 2, lichten: true });
+  assert.ok(/2 stroken met verkeerslichten/.test(r.omschrijving) && r.kosten > 1000000);
+  const ring = Object.values(k.edges).filter((e) => e.rotonde);
+  assert.equal(ring.length, 8, 'acht armen, acht ringdelen');
+  assert.ok(ring.every((e) => e.lanesF === 2));
+  assert.equal(Object.values(k.nodes).filter((n) => n.ctrl === 'vri').length, 4, 'licht alleen bij de vier ingangen');
+  const net = bouwSimnet(k);
+  assert.equal(net.regelaars.length, 4, 'elke ingang een eigen regelaar');
+  const sim = maakSim(net, { drukte: 1, seed: 7 });
+  draaiTot(sim, 1800);
+  assert.ok(meting(sim, 1200).rittenPerUur > 1000, 'verkeer komt erdoor');
+});
+
 await test('afslagverbod: route kiest een andere weg', () => {
   // Ladder: van linksonder naar rechtsboven kan via twee kruisingen.
   const k = maak(

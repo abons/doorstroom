@@ -47,6 +47,12 @@ export function kostRegeling(naam, oud, nieuw) {
   if (oud === 'rotonde') return regel(t, K.rotondeWeg, 8, 26);
   return regel(t, 0, 0, 0);
 }
+// Rotonde rond een heel kruispunt: elke extra strook op de ring maakt hem groter en duurder, lichten komen erbij.
+export function kostRotonde(naam, oud, stroken, lichten) {
+  const t = `${naam}: ${NAAM_REGELING[oud]} → rotonde, ${stroken} ${stroken > 1 ? 'stroken' : 'strook'}${lichten ? ' met verkeerslichten' : ''}`;
+  const k = K.rotonde * (1 + 0.6 * (stroken - 1)) + (lichten ? 1.5 * K.vriNieuw : 0) + (oud === 'vri' ? K.vriWeg : oud === 'rotonde' ? K.rotondeWeg : 0);
+  return regel(t, k, 14 + 6 * (stroken - 1) + (lichten ? 4 : 0), stroken > 1 ? 52 : 39);
+}
 export const NAAM_REGELING = { voorrang: 'voorrangskruising', vri: 'verkeerslichten', rotonde: 'rotonde', rand: 'rand' };
 
 export function kostNieuweWeg(lengte, strokenTot) {

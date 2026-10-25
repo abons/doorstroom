@@ -27,3 +27,10 @@
   `bewerk.js`) de armen op 14 m en legt eenrichtingsbogen tegen de klok in met `rotonde: true` — dezelfde vorm als een
   OSM-rotonde. Daarbij: aan de rand niet terug naar dezelfde weg (`terug` in `spawn`), anders gaf de ring ~20 % extra
   keer-ritten en was vóór/na niet vergelijkbaar. Een rotonde-knoop uit een oud scenario werkt nog als vroeger.
+- **Rotonde om het hele kruispunt, 1-3 stroken, optioneel lichten** (2026-10-25, user: vier rotondejes op de
+  Stadsring). `kruispuntVan`: knopen via wegvakken ≤ 25 m, ≤ 40 m van de aangeklikte (Stadsring × Van Asch van
+  Wijckstraat: 5 knopen). Straal 14/20/26 m bij 1/2/3 stroken, minstens spreiding + 10. Demo, drukte 1, 2 seeds:
+  basis (VRI) 57,8 %, ring 1 strook 64,3 %, 2 stroken 68,6 %, 3 stroken 68,3 % (geen strookwissel, dus 3 ≈ 2),
+  3 + lichten 61,6 %. Met lichten: elke ingang een eigen regelaar (ring en ingang om beurten, `bouwRegelaars`
+  loopt niet over ringlinks), straal ≥ 30 m en alleen de ring op bij ≤ 50 % ringbezetting (`ringVol`): zonder die
+  twee liep een overvolle ring binnen 15 min helemaal vast (0 ritten/u).

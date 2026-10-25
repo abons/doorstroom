@@ -306,11 +306,22 @@ function selectiePaneel() {
     el.innerHTML = `<h2>${esc(namen.join(' / ') || 'Kruising')}</h2>
       ${n.ctrl === 'rand' ? '<p class="stil">Rand van het gebied: hier rijdt verkeer in en uit.</p>' : `
       <h3>Regeling</h3>
-      <div class="kiezer">${['voorrang', 'vri', 'rotonde'].map((c) => `<button data-ctrl="${c}" class="${c === n.ctrl ? 'aan' : ''}">${NAAM_REGELING[c][0].toUpperCase() + NAAM_REGELING[c].slice(1)}</button>`).join('')}</div>
+      <div class="kiezer">${['voorrang', 'vri', ...(n.ctrl === 'rotonde' ? ['rotonde'] : [])].map((c) => `<button data-ctrl="${c}" class="${c === n.ctrl ? 'aan' : ''}">${NAAM_REGELING[c][0].toUpperCase() + NAAM_REGELING[c].slice(1)}</button>`).join('')}</div>
+      ${rotondeKeuze(kaart, n.id)}
       <h3>Afslagen <small>(vinkje uit = verboden)</small></h3>
       ${afslagen.map((m) => `<label class="afslag" data-afslag="${m.key}" data-tekst="${esc(`${naamLink(m.from)} → ${naamLink(m.to)} (${SOORT[m.soort]})`)}">
         <input type="checkbox" ${m.toegestaan ? 'checked' : ''}> uit het ${windrichting(m.hIn)}: ${esc(naamLink(m.from))} → ${esc(naamLink(m.to))}<span class="soort">${SOORT[m.soort]}</span></label>`).join('')}`}`;
   }
+}
+
+// Rotonde bouwen rond het hele kruispunt (alle knopen op een paar meter van elkaar), met 1-3 stroken op de ring.
+function rotondeKeuze(kaart, id) {
+  if (Object.values(kaart.edges).some((e) => (e.a === id || e.b === id) && e.rotonde)) return '<p class="stil">Ligt aan een rotonde.</p>';
+  const leden = B.kruispuntVan(kaart, id).length, std = B.standaardStroken(kaart, id);
+  return `<h3>Rotonde maken</h3>
+      ${leden > 1 ? `<p class="stil">Neemt het hele kruispunt mee (${leden} knopen).</p>` : ''}
+      <div class="kiezer">${[1, 2, 3].map((s) => `<button data-rotonde="${s}" class="${s === std ? 'aan' : ''}">${s} ${s > 1 ? 'stroken' : 'strook'}</button>`).join('')}</div>
+      <label class="stil"><input type="checkbox" id="rotLicht"> met verkeerslichten bij elke ingang</label>`;
 }
 
 function liveWeg() {
@@ -512,6 +523,7 @@ $('paneel').addEventListener('click', (ev) => {
   } else if (d.richting) bewerk((k) => B.zetRichting(k, sel.id, d.richting));
   else if (b.id === 'afsluiten') bewerk((k) => B.verwijderWeg(k, sel.id));
   else if (d.ctrl) bewerk((k) => B.zetRegeling(k, sel.id, d.ctrl));
+  else if (d.rotonde) { const lichten = $('rotLicht')?.checked; bewerk((k) => B.maakRotonde(k, sel.id, { stroken: +d.rotonde, lichten })); }
   else if (d.afslag) { ev.preventDefault(); bewerk((k) => B.wisselVerbod(k, d.afslag, d.tekst)); }
   else if (d.weg) {
     st.routes = st.routes.filter((r) => r.id !== +d.weg);
