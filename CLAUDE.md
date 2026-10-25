@@ -11,10 +11,10 @@ no build. Dutch UI. Started 2026-10-25. Decisions: `design.md` → `docs/besluit
 | `web/bewerk.js` | every edit mutates the *kaart* and returns a budget line; `kosten.js` holds the game cost figures |
 | `web/teken.js` | renderer (PDOK tiles, roads, congestion colour, cars, lights, routes, selection) |
 | `web/app.js` | UI glue: explore → load area → play; panel, tools, undo, save/restore (`ds-` localStorage keys) |
-| `web/osm.js` | Overpass (3 endpoints in turn, Cache API), Locatieserver, tile URLs, `DEMO` |
+| `web/osm.js` | road data: `serve.mjs` `/osm` first (OSM API, ~1 s, disk cache `cache/`), then Overpass (3 endpoints at once); Cache API, Locatieserver, tile URLs, `DEMO` |
 | `web/demo/amersfoort.json` | OSM extract; the in-app demo **and** the real-data fixture of `test.mjs` |
 | `test.mjs` | `node test.mjs` — run after any change to `net.js`/`sim.js`/`meet.js`/`bewerk.js` |
-| `serve.mjs` | static server for `web/` on 127.0.0.1:**8095**; phone: `tailscale serve --bg --https=8447` → https://axel-pc.tailb59455.ts.net:8447 (tailnet only, never funnel; 2026-10-25) |
+| `serve.mjs` | static server for `web/` on 127.0.0.1:**8095** plus `/osm?bbox=` (restart it after editing); phone: `tailscale serve --bg --https=8447` → https://axel-pc.tailb59455.ts.net:8447 (tailnet only, never funnel; 2026-10-25) |
 
 ## Rules
 
@@ -24,7 +24,7 @@ no build. Dutch UI. Started 2026-10-25. Decisions: `design.md` → `docs/besluit
   index (common random numbers, `sim.js` `maakSim`). Anything that draws from a shared RNG inside `stap` breaks
   that. Single runs still differ a few % on no-op edits (measured 2026-10-25) → 3 seeds + `RUIS` thresholds.
 - ⚠️ **Overpass is slow and flaky** (2026-10-25: 33 s for a 1.5 km² area; kumi/mail.ru mirrors timed out,
-  overpass-api.de answers 406 to curl but works from a browser). Use the Demo for UI work.
+  overpass-api.de answers 406 to curl but works from a browser). Hence `/osm` in `serve.mjs`; Demo for UI work.
 - The live simulation runs on the main thread (`docs/besluiten/hoofdthread.md`); before/after measuring runs in `web/meet-worker.js` (a phone froze on it, 2026-10-25).
 - Costs are game values (`kosten.js` header). Never present them as CROW figures or quotes.
 - Service worker `web/sw.js` is network-first; bump `VERSIE` when the shell file list changes.

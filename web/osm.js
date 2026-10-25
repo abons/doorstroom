@@ -1,4 +1,4 @@
-// Ophalen: wegennet uit OpenStreetMap (Overpass) en adressen zoeken (PDOK Locatieserver). Overpass-antwoorden
+// Ophalen: wegennet uit OpenStreetMap (eigen server of Overpass) en adressen zoeken (PDOK Locatieserver). Antwoorden
 // gaan in de Cache API, dus een gebied dat je al eens laadde komt daarna direct en ook offline.
 import { overpassQuery } from './net.js';
 
@@ -10,26 +10,45 @@ const OVERPASS = [
 const CACHE = 'doorstroom-osm';
 
 export async function haalWegen(bbox, melding = () => {}) {
-  const q = overpassQuery(bbox.map((v) => +v.toFixed(5)));
+  const b5 = bbox.map((v) => +v.toFixed(5));
+  const q = overpassQuery(b5);
   const sleutel = 'https://cache.doorstroom/osm?q=' + encodeURIComponent(q);
   let cache = null;
   try { cache = await caches.open(CACHE); const hit = await cache.match(sleutel); if (hit) return await hit.json(); } catch {}
-  let fout;
-  for (const url of OVERPASS) {
-    const t0 = Date.now();
-    const tik = setInterval(() => melding(`Wegen ophalen bij ${new URL(url).host}… ${Math.round((Date.now() - t0) / 1000)} s (OpenStreetMap is soms traag)`), 1000);
-    try {
-      const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), 130000);
-      const r = await fetch(url, { method: 'POST', body: new URLSearchParams({ data: q }), signal: ctl.signal });
-      if (!r.ok) throw new Error(`${r.status}`);
-      const tekst = await r.text();
-      clearTimeout(timer);
-      const json = JSON.parse(tekst);
-      try { await cache?.put(sleutel, new Response(tekst, { headers: { 'content-type': 'application/json' } })); } catch {}
-      return json;
-    } catch (e) { fout = e; } finally { clearInterval(tik); }
-  }
-  throw new Error(`Overpass niet bereikbaar (${fout?.message ?? fout})`);
+  const t0 = Date.now();
+  let waar = 'de server';
+  const tik = setInterval(() => melding(`Wegen ophalen bij ${waar}… ${Math.round((Date.now() - t0) / 1000)} s`), 1000);
+  try {
+    // Eerst de eigen server (serve.mjs → OSM-API, seconden); is die er niet, dan Overpass.
+    let tekst;
+    try { tekst = await haal('osm?bbox=' + b5.join(','), null, 60000); } catch {
+      waar = 'Overpass (OpenStreetMap, kan een minuut duren)';
+      tekst = await overpass(q);
+    }
+    const json = JSON.parse(tekst);
+    try { await cache?.put(sleutel, new Response(tekst, { headers: { 'content-type': 'application/json' } })); } catch {}
+    return json;
+  } finally { clearInterval(tik); }
+}
+
+async function haal(url, body, ms, stop) {
+  const ctl = new AbortController(), timer = setTimeout(() => ctl.abort(), ms);
+  stop?.addEventListener('abort', () => ctl.abort());
+  try {
+    const r = await fetch(url, body ? { method: 'POST', body, signal: ctl.signal } : { signal: ctl.signal });
+    if (!r.ok) throw new Error(`${r.status}`);
+    return await r.text();
+  } finally { clearTimeout(timer); }
+}
+
+// Alle Overpass-servers tegelijk: de eerste met een antwoord wint, de rest wordt afgebroken.
+async function overpass(q) {
+  const stop = new AbortController();
+  try {
+    return await Promise.any(OVERPASS.map((url) => haal(url, new URLSearchParams({ data: q }), 130000, stop.signal)));
+  } catch (e) {
+    throw new Error(`Overpass niet bereikbaar (${e.errors?.map((x) => x.message).join(', ') ?? e.message})`);
+  } finally { stop.abort(); }
 }
 
 // Vast stuk Amersfoort (binnenstad + Stadsring), voor als Overpass niet wil of om snel te proberen.

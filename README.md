@@ -9,7 +9,7 @@ substitute for a traffic study.
 
 ## What it does
 
-- **Real map**: road network from OpenStreetMap (Overpass API), background map and aerial photo from PDOK, address
+- **Real map**: road network from OpenStreetMap (through `serve.mjs` from the OSM API, else the Overpass API), background map and aerial photo from PDOK, address
   search via the PDOK Locatieserver. An area is at most 2 × 2 km. A built-in demo (Amersfoort city centre) works
   without any network call.
 - **Micro-simulation**: every car is simulated per lane (Intelligent Driver Model), with Dutch priority rules
