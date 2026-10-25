@@ -1,0 +1,14 @@
+{
+  "name": "Doorstroom",
+  "short_name": "Doorstroom",
+  "lang": "nl",
+  "id": "./",
+  "start_url": ".",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#11161d",
+  "theme_color": "#11161d",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}

@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Doorstroom</title>
+<meta name="description" content="Los het verkeer op in je eigen stad: echte kaart, losse auto's, wegen tekenen, kosten en reistijd vóór en na.">
+<meta name="theme-color" content="#11161d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header id="balk">
+  <div class="zoek">
+    <input id="zoek" type="search" placeholder="Zoek plaats, straat of adres" autocomplete="off">
+    <ul id="zoekLijst" hidden></ul>
+  </div>
+  <button id="laad" class="hoofd">Laad dit gebied</button>
+  <button id="demo" title="Binnenstad Amersfoort, zit in de app (werkt ook als OpenStreetMap traag is)">Demo</button>
+  <span class="tussen"></span>
+  <div class="groep" id="simKnoppen" hidden>
+    <button id="speel" title="Pauze (spatie)">⏸</button>
+    <button data-tempo="1" class="aan">1×</button><button data-tempo="4">4×</button><button data-tempo="16">16×</button>
+    <span id="klok" class="klok">07:00</span>
+  </div>
+  <label class="drukte" id="drukteVak" hidden>Drukte <input id="drukte" type="range" min="0.25" max="2" step="0.05" value="1"><b id="drukteTekst">100%</b></label>
+  <select id="laag" title="Ondergrond">
+    <option value="kaart">Kaart</option><option value="luchtfoto">Luchtfoto</option><option value="geen">Geen ondergrond</option>
+  </select>
+</header>
+
+<main>
+  <canvas id="doek"></canvas>
+  <div id="melding" hidden></div>
+  <div id="bron"></div>
+</main>
+
+<aside id="paneel" hidden>
+  <section class="score">
+    <div class="groot"><span id="doorstroom">–</span><small>doorstroom</small></div>
+    <div class="cijfers">
+      <div><b id="autos">0</b> auto's</div>
+      <div><b id="reistijd">–</b> gem. rit</div>
+      <div><b id="verlies">–</b> verliesuren/u</div>
+    </div>
+  </section>
+
+  <section class="gereedschap">
+    <button data-tool="kijk" class="aan" title="Weg of kruising aanklikken (1)">☝ Selecteren</button>
+    <button data-tool="weg" title="Nieuwe weg tekenen (2)">✎ Weg tekenen</button>
+    <button data-tool="route" title="Route A→B plannen (3)">⚑ Route</button>
+  </section>
+
+  <section id="uitleg" class="uitleg"></section>
+  <section id="selectie"></section>
+
+  <section>
+    <h2>Routes <small>reistijd vóór → na</small></h2>
+    <div id="routes"><p class="stil">Kies ⚑ Route en klik A en B op de kaart.</p></div>
+  </section>
+
+  <section>
+    <h2>Vóór / na <small id="meetStatus"></small></h2>
+    <table id="vergelijk" class="tabel"></table>
+    <button id="meet" class="klein">Opnieuw meten</button>
+  </section>
+
+  <section>
+    <h2>Begroting</h2>
+    <table id="begroting" class="tabel"></table>
+    <div class="rij">
+      <button id="ongedaan" class="klein" disabled>↶ Ongedaan maken</button>
+      <button id="allesTerug" class="klein" disabled>Alles terug</button>
+    </div>
+    <p class="stil">Kosten en weken zijn spelwaarden (ordegrootte, prijspeil 2026), geen offerte.</p>
+  </section>
+
+  <section class="rij">
+    <button id="exporteer" class="klein">Scenario opslaan</button>
+    <label class="klein knop">Scenario openen<input id="importeer" type="file" accept=".json,application/json" hidden></label>
+    <button id="anderGebied" class="klein">Ander gebied</button>
+  </section>
+</aside>
+
+<script type="module" src="app.js"></script>
+</body>
+</html>
