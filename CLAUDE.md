@@ -11,7 +11,7 @@ no build. Dutch UI. Started 2026-10-25. Decisions: `design.md` → `docs/besluit
 | `web/bewerk.js` | every edit mutates the *kaart* and returns a budget line; `kosten.js` holds the game cost figures |
 | `web/teken.js` | renderer (PDOK tiles, roads, congestion colour, cars, lights, routes, selection) |
 | `web/app.js` | UI glue: explore → load area → play; panel, tools, undo, save/restore (`ds-` localStorage keys) |
-| `web/osm.js` | road data: `serve.mjs` `/osm` first (OSM API, ~1 s, disk cache `cache/`), then Overpass (3 endpoints at once); Cache API, Locatieserver, tile URLs, `DEMO` |
+| `web/osm.js` | road data: tiles from `abons/doorstroom-wegen` first (`web/tegels.js` = its `decode.mjs`, ~0.3 s), then `serve.mjs` `/osm` (OSM API, disk cache `cache/`), then Overpass (3 endpoints at once); Cache API, Locatieserver, tile URLs, `DEMO` |
 | `web/demo/amersfoort.json` | OSM extract; the in-app demo **and** the real-data fixture of `test.mjs` |
 | `.github/workflows/pages.yml` | push to `main` → tests → `web/` on https://abons.github.io/doorstroom/ (public repo since 2026-10-25, user); no `/osm` there, so Overpass |
 | `test.mjs` | `node test.mjs` — run after any change to `net.js`/`sim.js`/`meet.js`/`bewerk.js` |

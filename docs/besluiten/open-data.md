@@ -16,3 +16,7 @@
   filtert tot wegen + hun knopen + VRI-knopen (215 KB) en bewaart in `cache/`. Zelfde import, 466 vs 463 edges.
   ⚠️ De OSM-API is bedoeld voor bewerken: dit is laag volume met cache, niet voor een publieke versie.
   Overpass-servers gaan tegelijk (`Promise.any`), niet na elkaar.
+- **Wegtegels als eerste bron** (2026-10-25, user: "ja beiden"): repo `abons/doorstroom-wegen` bouwt elke maandag uit
+  Geofabrik NL z14-tegels (16.155 stuks, 154 MB, ~3,5 min Action) op https://abons.github.io/doorstroom-wegen/.
+  `web/tegels.js` is een kopie van zijn `decode.mjs`. Utrecht 2 × 2 km: 0,24 s (Overpass: 30-60 s). Volgorde in
+  `osm.js`: tegels → `serve.mjs /osm` → Overpass. Data tot een week oud.

@@ -134,6 +134,18 @@ export function maakTekenaar(canvas) {
         ctx.fill(); ctx.lineWidth = 1; ctx.strokeStyle = '#111'; ctx.stroke();
       }
     }
+    // Verkeersstromen over de geselecteerde weg (app.js stromenVoor)
+    const sr = st.stromen;
+    if (sr && st.selectie?.soort === 'weg' && sr.edge === st.selectie.id) {
+      ctx.save(); ctx.strokeStyle = '#c026d3'; ctx.globalAlpha = 0.75; ctx.lineCap = 'round';
+      for (const [li, n] of sr.telling) {
+        const L = net.links[li];
+        if (!L) continue;
+        ctx.lineWidth = Math.max(2, (1 + 5 * (n / sr.max)) * Math.max(0.6, s));
+        pad(L.pts, L.eenrichting ? 0 : (L.lanes * STROOK) / 2); ctx.stroke();
+      }
+      ctx.restore();
+    }
     // Routes
     for (const r of st.routes ?? []) {
       if (r.pad) {

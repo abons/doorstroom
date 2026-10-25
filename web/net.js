@@ -182,6 +182,12 @@ export function bouwSimnet(kaart) {
     nodes[a].arms.push({ edge: e.id, hoek: armHoek(e.pts, true) });
     nodes[b].arms.push({ edge: e.id + (a === b ? '#2' : ''), hoek: armHoek(e.pts, false) });
   }
+  // Een kort wegvak tussen twee kruisingen hoort bij het kruispunt zelf (gescheiden rijbanen: vier knopen op ~12 m).
+  // Daar mag je pas op als je er ook weer af kunt (sim.js kanErAf).
+  for (const L of links) {
+    const A = nodes[L.from], Z = nodes[L.to];
+    L.binnen = !L.rotonde && L.eenrichting && L.len < 25 && A.ctrl !== 'rand' && Z.ctrl !== 'rand' && A.arms.length >= 3 && Z.arms.length >= 3;
+  }
   const moves = [];
   const EPS = 0.06; // rad: rechts rijden, inkomend verkeer ligt iets tegen de klok in van de arm, uitgaand iets met de klok mee
   for (const N of nodes) {

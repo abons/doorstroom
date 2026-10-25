@@ -1,6 +1,7 @@
-// Ophalen: wegennet uit OpenStreetMap (eigen server of Overpass) en adressen zoeken (PDOK Locatieserver). Antwoorden
+// Ophalen: wegennet uit OpenStreetMap (wegtegels, eigen server of Overpass) en adressen zoeken (PDOK Locatieserver). Antwoorden
 // gaan in de Cache API, dus een gebied dat je al eens laadde komt daarna direct en ook offline.
 import { overpassQuery } from './net.js';
+import { tegelsVoor, tegelUrl, naarOverpass } from './tegels.js';
 
 const OVERPASS = [
   'https://overpass-api.de/api/interpreter',
@@ -16,19 +17,35 @@ export async function haalWegen(bbox, melding = () => {}) {
   let cache = null;
   try { cache = await caches.open(CACHE); const hit = await cache.match(sleutel); if (hit) return await hit.json(); } catch {}
   const t0 = Date.now();
-  let waar = 'de server';
+  let waar = 'de wegtegels';
   const tik = setInterval(() => melding(`Wegen ophalen bij ${waar}… ${Math.round((Date.now() - t0) / 1000)} s`), 1000);
   try {
-    // Eerst de eigen server (serve.mjs → OSM-API, seconden); is die er niet, dan Overpass.
+    // Eerst de wegtegels (abons/doorstroom-wegen, ~0,3 s), dan de eigen server (serve.mjs → OSM-API), dan Overpass.
     let tekst;
-    try { tekst = await haal('osm?bbox=' + b5.join(','), null, 60000); } catch {
-      waar = 'Overpass (OpenStreetMap, kan een minuut duren)';
-      tekst = await overpass(q);
+    try { tekst = JSON.stringify(await uitTegels(b5)); } catch {
+      waar = 'de server';
+      try { tekst = await haal('osm?bbox=' + b5.join(','), null, 60000); } catch {
+        waar = 'Overpass (OpenStreetMap, kan een minuut duren)';
+        tekst = await overpass(q);
+      }
     }
     const json = JSON.parse(tekst);
     try { await cache?.put(sleutel, new Response(tekst, { headers: { 'content-type': 'application/json' } })); } catch {}
     return json;
   } finally { clearInterval(tik); }
+}
+
+// Een tegel zonder autowegen bestaat niet (404): die is leeg.
+async function uitTegels(bbox) {
+  const lijst = tegelsVoor(bbox);
+  if (lijst.length > 30) throw new Error('te veel tegels');
+  const json = await Promise.all(lijst.map(async ([x, y]) => {
+    const r = await fetch(tegelUrl(x, y));
+    if (r.status === 404) return null;
+    if (!r.ok) throw new Error(`tegel ${r.status}`);
+    return r.json();
+  }));
+  return naarOverpass(json.filter(Boolean));
 }
 
 async function haal(url, body, ms, stop) {

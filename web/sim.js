@@ -4,7 +4,7 @@ import { klasseVan } from './net.js';
 
 export const DT = 0.25; // s per stap
 const LEN = 4.5, S0 = 2, B = 2.0, MAX_AUTOS = 5000;
-const GAP = 3.0, VRIJ_NA = 2.0, BEZET = 0.9, GEDULD = 14;
+const GAP = 3.0, VRIJ_NA = 2.0, BEZET = 0.9, GEDULD = 14, OPGEVEN = 180;
 const DRAAI = { S: 0, R: 2, L: 3.5, U: 6 };
 const BOCHT = { R: 5, L: 6.5, U: 3 };
 
@@ -292,6 +292,21 @@ function ringVol(sim, N) {
   return (autos * (LEN + S0)) / ruimte;
 }
 
+// Kruispunt vrijhouden (zoals TM:PE's "enter blocked junction" uit): wie een kruispunt van meerdere knopen op rijdt,
+// moet op elk binnenstuk van zijn pad plek hebben én op de weg erna. Zonder dit stonden op een kruising met
+// gescheiden rijbanen de vier binnenstukken rondom vol linksafslaers en liep alles vast (0 ritten/u, 2026-10-25).
+function kanErAf(sim, auto) {
+  const { links } = sim.net, plek = LEN + S0;
+  for (let j = auto.ri + 1; j < auto.pad.length; j++) {
+    const K = links[auto.pad[j]];
+    if (!K.binnen) return K.banen.some((b) => !b.length || b.at(-1).x >= plek + 1); // en op de weg erna
+    // Per strook: de strook die hij daar zou kiezen (rechtdoor: elke strook) moet plek hebben.
+    const soort = soortNa(sim, auto, j), past = (b) => (b.length + 1) * plek <= Math.max(K.len, plek);
+    if (!(soort === 'S' || K.lanes === 1 ? K.banen.some(past) : past(K.banen[kiesBaan(K, soort)]))) return false;
+  }
+  return true;
+}
+
 // Mag de voorste auto op zijn link de kruising op? Zet ook auto.volgBaan.
 function magGaan(sim, auto, L, m) {
   const { links, moves } = sim.net;
@@ -306,6 +321,7 @@ function magGaan(sim, auto, L, m) {
   // Een ring met lichten liep helemaal vol en dan vast (ringverkeer staat voor rood, de ingangen vullen elk gat).
   // Dus bij een geregelde ingang alleen de ring op als de hele ring hoogstens half vol staat (2026-10-25).
   if (licht && !L.rotonde && N.rotonde && ringVol(sim, N) > 0.5) return false;
+  if (!L.binnen && N.binnen && sim.net.links[auto.pad[auto.ri + 2]]?.binnen && !kanErAf(sim, auto)) return false;
   for (const ni of m.conflict) if (sim.t - sim.laatstePas[ni] < BEZET) return false; // er rijdt net iemand over de kruising
   const rotonde = sim.net.nodes[m.node].ctrl === 'rotonde' || L.rotonde === false && links[m.to].rotonde;
   for (const ni of m.wijktVoor) {
@@ -376,6 +392,10 @@ export function stap(sim) {
     for (let k = 1; k < baan.length; k++) if (baan[k].x > baan[k - 1].x - LEN - 0.2) { baan[k].x = baan[k - 1].x - LEN - 0.2; baan[k].v = Math.min(baan[k].v, baan[k - 1].v); }
     while (baan.length) {
       const auto = baan[0];
+      // Vastgelopen (Cities: Skylines "despawn"): wie OPGEVEN s stilstaat vooraan, verdwijnt. Anders zet een stad op
+      // 200 % drukte zich binnen het uur helemaal vast (Amersfoort-demo: 156 ritten/u, 2026-10-25). De rit telt mee
+      // met de tijd tot dan, zodat doorstroom niet mooier wordt; meting telt ze apart.
+      if (auto.wacht > OPGEVEN) { baan.shift(); sim.autos--; sim.ritten.push({ t: sim.t, tijd: sim.t - auto.t0, vrij: auto.vrij, opgegeven: true }); continue; }
       if (auto.ri === auto.pad.length - 1) {
         if (auto.x >= auto.doel.pos || auto.x >= L.len) { baan.shift(); sim.autos--; klaar(sim, auto); continue; }
         break;
@@ -440,6 +460,7 @@ export function meting(sim, venster = 600) {
     gemReistijd: r.length ? tijd / r.length : 0,
     verliesPerUur: ((tijd - vrij) / 3600) * (3600 / duur),
     rittenPerUur: (r.length * 3600) / duur,
+    opgegevenPerUur: (r.filter((x) => x.opgegeven).length * 3600) / duur,
     autos: sim.autos,
     wachtrij,
   };

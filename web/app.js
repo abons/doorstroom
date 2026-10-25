@@ -292,7 +292,9 @@ function selectiePaneel() {
       <h3>Richting</h3>
       <div class="kiezer">${[['beide', 'Beide kanten'], ['heen', 'Alleen →'], ['terug', 'Alleen ←']].map(([k, t]) => `<button data-richting="${k}" class="${k === r ? 'aan' : ''}">${t}</button>`).join('')}</div>
       <div class="rij" style="margin-top:8px"><button id="afsluiten" class="klein">Afsluiten voor auto's</button></div>
-      <p class="stil" id="liveWeg"></p>`;
+      <p class="stil" id="liveWeg"></p>
+      <h3>Verkeersstromen</h3>
+      <p class="stil" id="stromen"></p>`;
     liveWeg();
   } else {
     const n = kaart.nodes[sel.id];
@@ -329,6 +331,22 @@ function liveWeg() {
   if (!el || !st.net) return;
   const ls = st.net.links.filter((L) => L.edge === st.selectie.id);
   el.textContent = 'Nu: ' + ls.map((L) => `${L.dir === 'f' ? '→' : '←'} ${L.aantal ?? 0} auto's, ${pct(L.snelheid ?? 1)} van max`).join(' · ');
+  stromenVoor(ls);
+}
+
+// Verkeersstromen (zoals "Traffic Routes" in Cities: Skylines): alle auto's die nu over deze weg rijden of er nog
+// langs komen, met hun hele route; de kaart tekent per wegvak hoeveel het er zijn. Zo zie je waar de file vandaan komt.
+function stromenVoor(ls) {
+  const hier = new Set(ls.map((L) => L.i)), telling = new Map();
+  let n = 0;
+  for (const L of st.net.links) for (const b of L.banen) for (const a of b) {
+    if (!a.pad.slice(a.ri).some((li) => hier.has(li))) continue;
+    n++;
+    for (const li of a.pad) telling.set(li, (telling.get(li) ?? 0) + 1);
+  }
+  st.stromen = { edge: st.selectie.id, telling, max: Math.max(1, ...telling.values()), n };
+  const el = $('stromen');
+  if (el) el.textContent = n ? `${n} auto's rijden hier nu of straks langs; paars op de kaart is hun hele route (dikker = meer).` : 'Nu rijdt hier niemand langs.';
 }
 
 function vergelijk() {

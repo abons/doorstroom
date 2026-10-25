@@ -34,3 +34,13 @@
   3 + lichten 61,6 %. Met lichten: elke ingang een eigen regelaar (ring en ingang om beurten, `bouwRegelaars`
   loopt niet over ringlinks), straal ≥ 30 m en alleen de ring op bij ≤ 50 % ringbezetting (`ringVol`): zonder die
   twee liep een overvolle ring binnen 15 min helemaal vast (0 ritten/u).
+- **Kruispunt vrijhouden + opgeven, naar TM:PE** (2026-10-25, user koos dit na onderzoek naar Cities: Skylines).
+  `L.binnen` = eenrichting-wegvak < 25 m tussen twee kruisingen (binnenstuk van gescheiden rijbanen). Wie een pad
+  met ≥ 2 binnenstukken op rijdt, moet op elk daarvan plek hebben in de strook die hij kiest, en op de weg erna
+  (`kanErAf`). Zonder: 4 VRI-knopen 12 m uit elkaar, drukte 0,5 → na 40 min 0 ritten/u (linksaf rondom vast); met:
+  ~1750/u. Kost op de demo bij drukte 1: 57,8 → 51,3 % (2 seeds), bewust geaccepteerd (wie het kruispunt op rijdt
+  zonder eraf te kunnen, blokkeert het in het echt ook). **Opgeven** (despawn): vooraan 180 s stil → weg, rit telt
+  mee met zijn tijd tot dan, `meting.opgegevenPerUur` apart. Demo op 200 %: zonder liep de hele binnenstad binnen het
+  uur vast (156 ritten/u), met ~3400 ritten/u en ~1000 opgegeven/u.
+- **Verkeersstromen** (`stromenVoor` in app.js, als "Traffic Routes" in CS): bij een geselecteerde weg alle auto's
+  die er nu of straks langs komen, hun hele route paars op de kaart, dikte = aantal.
