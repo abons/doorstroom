@@ -138,14 +138,35 @@ await test('bewerkingen: knippen, weg tekenen, afsluiten, kosten', () => {
   assert.equal(B.zetSnelheid(k, nieuw.id, 50), null, 'geen wijziging = geen regel');
   const s = B.zetSnelheid(k, nieuw.id, 30);
   assert.ok(s.kosten > 0 && /50 → 30/.test(s.omschrijving));
-  const v = B.zetRegeling(k, midden.id, 'rotonde');
-  assert.ok(v.kosten >= 500000 && v.voorbereidingWeken > 26);
+  const v = B.zetRegeling(k, midden.id, 'vri');
+  assert.ok(v.kosten >= 100000);
   const t = totaal([r, s, v]);
   assert.equal(t.kosten, r.kosten + s.kosten + v.kosten);
   assert.equal(t.voorbereidingWeken, Math.max(r.voorbereidingWeken, s.voorbereidingWeken, v.voorbereidingWeken));
   B.verwijderWeg(k, nieuw.id);
   assert.ok(!Object.values(k.edges).some((e) => e.nieuw));
   assert.ok(!k.nodes.c, 'losse knoop opgeruimd');
+});
+
+await test('rotonde wordt een ring: tegen de klok in, wijkt bij oprijden, beter dan voorrang bij drukte', () => {
+  const k = kruis('voorrang', 'primary', 'primary');
+  const v = B.zetRegeling(k, 'c', 'rotonde');
+  assert.ok(v.kosten >= 500000 && v.voorbereidingWeken > 26);
+  assert.ok(!k.nodes.c, 'middelpunt weg');
+  const ring = Object.values(k.edges).filter((e) => e.rotonde);
+  assert.equal(ring.length, 4);
+  for (const e of ring) {
+    assert.equal(e.lanesB, 0);
+    const [a, b] = [k.nodes[e.a], k.nodes[e.b]];
+    assert.ok(a.x * -b.y - -a.y * b.x > 0, 'tegen de klok in (y wijst naar het zuiden)');
+  }
+  assert.equal(B.zetRegeling(k, ring[0].a, 'rotonde'), null, 'geen ring in een ring');
+  const net = bouwSimnet(k);
+  const op = net.moves.find((m) => !net.links[m.from].rotonde && net.links[m.to].rotonde);
+  assert.ok(op.wijktVoor.length > 0, 'oprijden wijkt voor de ring');
+  const ritten = (kk) => { const sim = maakSim(bouwSimnet(kk), { drukte: 1, seed: 7 }); draaiTot(sim, 1800); return meting(sim, 1200).rittenPerUur; };
+  const rr = ritten(k), vr = ritten(kruis('voorrang', 'primary', 'primary'));
+  assert.ok(rr >= vr * 0.98, `ring ${rr} vs voorrang ${vr} per uur`);
 });
 
 await test('afslagverbod: route kiest een andere weg', () => {

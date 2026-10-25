@@ -21,3 +21,9 @@
   start op lege-weg-tijd + afslagstraf; zonder metingen 60 s lang zakt de waarde terug naar leeg. Routes per
   herkomst/bestemming 120 s in de cache.
 - **Doorstroom-%** = som lege-weg-tijd / som werkelijke tijd van afgeronde ritten (incl. wachten om het net op te komen).
+- **Rotonde = echte ring** (2026-10-25, user: "Rotondes werken niet"). Eerst was een rotonde één knoop met "links gaat
+  voor": alle bewegingen kruisten elkaar, auto's reden over het middeneiland en de capaciteit was die van een
+  voorrangskruising (1695 vs 1659/u, kruis van primary-armen, drukte 1). Nu knipt `zetRegeling` (`maakRing` in
+  `bewerk.js`) de armen op 14 m en legt eenrichtingsbogen tegen de klok in met `rotonde: true` — dezelfde vorm als een
+  OSM-rotonde. Daarbij: aan de rand niet terug naar dezelfde weg (`terug` in `spawn`), anders gaf de ring ~20 % extra
+  keer-ritten en was vóór/na niet vergelijkbaar. Een rotonde-knoop uit een oud scenario werkt nog als vroeger.

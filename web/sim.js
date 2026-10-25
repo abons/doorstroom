@@ -244,7 +244,9 @@ function spawn(sim) {
     if (trek < kans && h.wacht.length < 30) {
       const di = kiesDoel(sim, () => doelTrek);
       const d = sim.doelen[di];
-      if (!(d.link === h.link && d.pos <= h.pos)) h.wacht.push({ t: sim.t, di, rr: rng(Math.floor(doelTrek * 4294967296)) });
+      // Aan de rand terug naar dezelfde weg zou alleen keren zijn; met een rotonde kan dat ineens wel (2026-10-25).
+      const terug = h.rand && d.rand && d.link !== h.link && sim.net.links[h.link].edge === sim.net.links[d.link].edge;
+      if (!terug && !(d.link === h.link && d.pos <= h.pos)) h.wacht.push({ t: sim.t, di, rr: rng(Math.floor(doelTrek * 4294967296)) });
     }
     if (!h.wacht.length || sim.autos >= MAX_AUTOS) return;
     const w = h.wacht[0];

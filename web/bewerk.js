@@ -51,10 +51,50 @@ export function verwijderWeg(kaart, edgeId) {
 export function zetRegeling(kaart, nodeId, ctrl) {
   const n = kaart.nodes[nodeId];
   if (!n || n.ctrl === ctrl || n.ctrl === 'rand') return null;
-  const namen = [...new Set(Object.values(kaart.edges).filter((e) => e.a === nodeId || e.b === nodeId).map(naamVan))].slice(0, 2).join(' / ');
+  const armen = Object.values(kaart.edges).filter((e) => e.a === nodeId || e.b === nodeId);
+  if (ctrl === 'rotonde' && armen.some((e) => e.rotonde)) return null; // ligt al aan een rotonde
+  const namen = [...new Set(armen.map(naamVan))].slice(0, 2).join(' / ');
   const r = K.kostRegeling(namen || 'kruising', n.ctrl, ctrl);
+  if (ctrl === 'rotonde' && maakRing(kaart, nodeId)) return r;
   n.ctrl = ctrl;
   return r;
+}
+
+// Een rotonde als echte ring: elke arm wordt R meter van het midden geknipt, het stuk binnen de cirkel valt weg en
+// de knippunten worden met eenrichtingsbogen tegen de klok in verbonden. Een rotonde als één knoop liet alle
+// bewegingen elkaar kruisen, dus reed er telkens maar één auto: niet beter dan een voorrangskruising (2026-10-25).
+// De ringwegen krijgen rotonde: true (rang 10), dus wie de ring op wil, wijkt.
+const RING = 14;
+function maakRing(kaart, nodeId) {
+  const c = kaart.nodes[nodeId];
+  const armen = Object.values(kaart.edges).filter((e) => (e.a === nodeId) !== (e.b === nodeId));
+  if (armen.length < 3) return false;
+  const R = Math.max(6, Math.min(RING, ...armen.map((e) => 0.6 * lengteVan(e.pts))));
+  const punten = [];
+  for (const e of armen) {
+    const len = lengteVan(e.pts), opA = e.a === nodeId;
+    const pid = knipWeg(kaart, e.id, opA ? R : len - R);
+    const binnen = Object.values(kaart.edges).find((x) => (x.a === nodeId && x.b === pid) || (x.b === nodeId && x.a === pid));
+    if (binnen) delete kaart.edges[binnen.id];
+    const p = kaart.nodes[pid];
+    punten.push({ id: pid, hoek: Math.atan2(-(p.y - c.y), p.x - c.x) });
+  }
+  punten.sort((p, q) => p.hoek - q.hoek);
+  punten.forEach((p, i) => {
+    const q = punten[(i + 1) % punten.length];
+    let tot = q.hoek; while (tot <= p.hoek) tot += 2 * Math.PI;
+    const stappen = Math.max(2, Math.ceil((tot - p.hoek) / 0.26));
+    const pts = [];
+    for (let k = 0; k <= stappen; k++) {
+      const h = p.hoek + ((tot - p.hoek) * k) / stappen;
+      pts.push([c.x + R * Math.cos(h), c.y - R * Math.sin(h)]);
+    }
+    pts[0] = [kaart.nodes[p.id].x, kaart.nodes[p.id].y]; pts[stappen] = [kaart.nodes[q.id].x, kaart.nodes[q.id].y];
+    const id = 'w' + kaart.volgnr++;
+    kaart.edges[id] = { id, a: p.id, b: q.id, pts, cls: 'tertiary', naam: 'Rotonde', kmh: 30, lanesF: 1, lanesB: 0, rotonde: true, nieuw: true };
+  });
+  delete kaart.nodes[nodeId];
+  return true;
 }
 
 export function wisselVerbod(kaart, sleutel, omschrijving) {
