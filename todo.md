@@ -8,4 +8,4 @@
 - **Rijstrookwissel** op de link (nu kiest een auto alleen bij het oprijden).
 - Telefoon: layout nagelopen in een 390 px-frame (2026-10-25), nog niet op een echte telefoon bevestigd dat hij niet meer vastloopt.
 - PNG-iconen voor de PWA (nu alleen `icon.svg`).
-- Publiceren (GitHub Pages / landingspagina)? Vraag aan user — pas bij publicatie op `Apps/apps.js`.
+- Landingspagina (`Apps/apps.js`)? Vraag aan user — Pages staat sinds 2026-10-25 op https://abons.github.io/doorstroom/.
