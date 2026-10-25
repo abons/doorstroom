@@ -13,6 +13,7 @@ no build. Dutch UI. Started 2026-10-25. Decisions: `design.md` → `docs/besluit
 | `web/app.js` | UI glue: explore → load area → play; panel, tools, undo, save/restore (`ds-` localStorage keys) |
 | `web/osm.js` | road data: `serve.mjs` `/osm` first (OSM API, ~1 s, disk cache `cache/`), then Overpass (3 endpoints at once); Cache API, Locatieserver, tile URLs, `DEMO` |
 | `web/demo/amersfoort.json` | OSM extract; the in-app demo **and** the real-data fixture of `test.mjs` |
+| `.github/workflows/pages.yml` | push to `main` → tests → `web/` on https://abons.github.io/doorstroom/ (public repo since 2026-10-25, user); no `/osm` there, so Overpass |
 | `test.mjs` | `node test.mjs` — run after any change to `net.js`/`sim.js`/`meet.js`/`bewerk.js` |
 | `serve.mjs` | static server for `web/` on 127.0.0.1:**8095** plus `/osm?bbox=` (restart it after editing); phone: `tailscale serve --bg --https=8447` → https://axel-pc.tailb59455.ts.net:8447 (tailnet only, never funnel; 2026-10-25) |
 

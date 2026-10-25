@@ -26,6 +26,9 @@ substitute for a traffic study.
 
 ## Run it
 
+Live: https://abons.github.io/doorstroom/ (GitHub Pages, deployed from `web/` on every push to `main`). There the
+road data comes from Overpass, which can take up to a minute on a busy day; `serve.mjs` fetches it in seconds.
+
 No build step and no dependencies. Serve `web/` with any static server, or:
 
 ```
