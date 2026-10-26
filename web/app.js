@@ -669,3 +669,19 @@ const vorig = lees('ds-scenario');
 if (vorig) { try { herstel(vorig); } catch { verkennen(); } } else spelModus(false);
 requestAnimationFrame(lus);
 if ('serviceWorker' in navigator && location.protocol !== 'file:') navigator.serviceWorker.register('sw.js').catch(() => {});
+
+// Installeren als app. Chrome/Edge/Android geven een beforeinstallprompt; iPhone/iPad (Safari) niet, daar alleen uitleg.
+const alsApp = matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const ios = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+let installVraag = null;
+$('installeer').hidden = alsApp || !ios;
+addEventListener('beforeinstallprompt', (ev) => { ev.preventDefault(); installVraag = ev; $('installeer').hidden = false; });
+addEventListener('appinstalled', () => { installVraag = null; $('installeer').hidden = true; meld('Doorstroom staat nu als app op je apparaat.', 4000); });
+$('installeer').onclick = async () => {
+  if (installVraag) {
+    installVraag.prompt();
+    await installVraag.userChoice;
+    installVraag = null; // een vraag werkt maar één keer; Chrome stuurt later zelf een nieuwe
+    $('installeer').hidden = true;
+  } else if (ios) meld('Tik op Deel (□↑) in de browserbalk en kies "Zet op beginscherm".', 8000);
+};
