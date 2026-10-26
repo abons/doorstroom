@@ -239,8 +239,10 @@ function ongedaan() {
   na = null;
   bouw(); planMeting(); paneel(); bewaar();
 }
+// Ook knopen zetten (zonder begrotingsregel) telt als wijziging.
+const gewijzigd = () => begroting.length > 0 || (!!st.kaart && JSON.stringify(st.kaart) !== basis);
 function allesTerug() {
-  if (!begroting.length && !historie.length) return;
+  if (!gewijzigd()) return;
   historie.push({ kaart: JSON.stringify(st.kaart), begroting: [...begroting], selectie: st.selectie });
   st.kaart = JSON.parse(basis); begroting = []; st.selectie = null; na = null;
   bouw(); planMeting(); paneel(); bewaar();
@@ -249,7 +251,7 @@ function allesTerug() {
 // ---------- paneel ----------
 function paneel() {
   selectiePaneel(); routesPaneel(); vergelijk(); begrotingPaneel(); meetStatus();
-  $('ongedaan').disabled = !historie.length; $('allesTerug').disabled = !begroting.length && !historie.length;
+  $('ongedaan').disabled = !historie.length; $('allesTerug').disabled = !gewijzigd();
 }
 
 function kiesTool(t) {
