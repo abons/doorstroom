@@ -683,5 +683,5 @@ $('installeer').onclick = async () => {
     await installVraag.userChoice;
     installVraag = null; // een vraag werkt maar één keer; Chrome stuurt later zelf een nieuwe
     $('installeer').hidden = true;
-  } else if (ios) meld('Tik op Deel (□↑) onderin Safari en kies "Zet op beginscherm".', 8000);
+  } else if (ios) meld('Tik op Deel (□↑) in de browserbalk en kies "Zet op beginscherm".', 8000);
 };
