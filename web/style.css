@@ -30,6 +30,7 @@ select { background: #222b36; border: 1px solid var(--rand); border-radius: 8px;
 .drukte { display: flex; align-items: center; gap: 6px; color: var(--stil); }
 .drukte input { width: 90px; }
 .drukte b { color: var(--tekst); min-width: 40px; font-weight: 500; }
+.nacht { display: flex; align-items: center; gap: 4px; color: var(--stil); white-space: nowrap; cursor: pointer; }
 
 main { position: fixed; inset: var(--kop, 52px) 0 0 0; }
 #doek { width: 100%; height: 100%; display: block; touch-action: none; cursor: grab; }
