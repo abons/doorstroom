@@ -222,13 +222,14 @@ function meetStatus() {
 function bewerk(f) {
   const kopie = JSON.stringify(st.kaart);
   const regel = f(st.kaart);
-  if (!regel) return;
+  if (!regel) return false;
   historie.push({ kaart: kopie, begroting: [...begroting], selectie: st.selectie });
-  begroting.push(regel);
+  if (regel !== true) begroting.push(regel); // true = wel veranderd, maar kost niets (knoop zetten)
   na = null;
   if (st.selectie?.soort === 'weg' && !st.kaart.edges[st.selectie.id]) st.selectie = null;
   if (st.selectie?.soort === 'knoop' && !st.kaart.nodes[st.selectie.id]) st.selectie = null;
   bouw(); planMeting(); paneel(); bewaar();
+  return true;
 }
 function ongedaan() {
   const h = historie.pop();
@@ -239,7 +240,7 @@ function ongedaan() {
   bouw(); planMeting(); paneel(); bewaar();
 }
 function allesTerug() {
-  if (!begroting.length) return;
+  if (!begroting.length && !historie.length) return;
   historie.push({ kaart: JSON.stringify(st.kaart), begroting: [...begroting], selectie: st.selectie });
   st.kaart = JSON.parse(basis); begroting = []; st.selectie = null; na = null;
   bouw(); planMeting(); paneel(); bewaar();
@@ -248,11 +249,11 @@ function allesTerug() {
 // ---------- paneel ----------
 function paneel() {
   selectiePaneel(); routesPaneel(); vergelijk(); begrotingPaneel(); meetStatus();
-  $('ongedaan').disabled = !historie.length; $('allesTerug').disabled = !begroting.length;
+  $('ongedaan').disabled = !historie.length; $('allesTerug').disabled = !begroting.length && !historie.length;
 }
 
 function kiesTool(t) {
-  tool = t; st.tekenLijn = null;
+  tool = t; st.tool = t; st.tekenLijn = null;
   document.querySelectorAll('[data-tool]').forEach((b) => b.classList.toggle('aan', b.dataset.tool === t));
   doek.classList.toggle('tekenen', t !== 'kijk');
   uitleg();
@@ -267,6 +268,8 @@ function uitleg() {
   } else if (tool === 'route') {
     const open = st.routes.find((r) => !r.B);
     u.textContent = open ? 'Klik nu punt B (bestemming).' : st.routes.length >= 5 ? 'Maximaal 5 routes; verwijder er eerst een.' : 'Klik punt A (vertrek) op een weg.';
+  } else if (tool === 'knip') {
+    u.textContent = 'Klik op een weg om er een knoop op te zetten. Met een knoop aan elke kant kies je ☝ Selecteren, klik je het stuk ertussen aan en kies je "Wegvak weghalen". Klik op een knoop om hem weer weg te halen.';
   } else u.textContent = st.selectie ? '' : 'Klik op een weg of kruising om hem aan te passen. Slepen = schuiven, scrollen = zoomen.';
 }
 
@@ -291,7 +294,8 @@ function selectiePaneel() {
       <span class="teller">← <button data-strook="B-">−</button><b>${e.lanesB}</b><button data-strook="B+">+</button></span>
       <h3>Richting</h3>
       <div class="kiezer">${[['beide', 'Beide kanten'], ['heen', 'Alleen →'], ['terug', 'Alleen ←']].map(([k, t]) => `<button data-richting="${k}" class="${k === r ? 'aan' : ''}">${t}</button>`).join('')}</div>
-      <div class="rij" style="margin-top:8px"><button id="afsluiten" class="klein">Afsluiten voor auto's</button></div>
+      <div class="rij" style="margin-top:8px"><button id="afsluiten" class="klein">Wegvak weghalen</button><button data-tool="knip" class="klein">✂ Knippen</button></div>
+      <p class="stil">Weghalen = afsluiten voor auto's, van knoop tot knoop. Alleen een stuk? Zet eerst knopen met ✂ Knippen.</p>
       <p class="stil" id="liveWeg"></p>
       <h3>Verkeersstromen</h3>
       <p class="stil" id="stromen"></p>`;
@@ -427,7 +431,22 @@ function klik(px, py) {
       bewaar();
     }
     uitleg(); routesPaneel();
+  } else if (tool === 'knip') {
+    const n = knoopOnder(px, py);
+    if (n) { if (!bewerk((k) => B.haalKnoopWeg(k, n))) meld('Deze knoop kan niet weg: de wegvakken ernaast verschillen (snelheid, stroken), of het is een kruising.', 3000); }
+    else if (!bewerk((k) => B.zetKnoop(k, x, y, 14 / view.s))) meld('Klik op een weg, niet vlak bij een kruising of knoop.', 2000);
   }
+}
+
+// Knoop met twee wegvakken (geen kruising) onder de muis, voor ✂ Knippen.
+function knoopOnder(px, py) {
+  let best = null, bd = 12;
+  for (const N of st.net.nodes) {
+    if (N.arms.length !== 2 || N.ctrl !== 'voorrang') continue;
+    const d = Math.hypot(T.sx(N.x) - px, T.sy(N.y) - py);
+    if (d < bd) { bd = d; best = N.id; }
+  }
+  return best;
 }
 
 // Wat ligt er onder de muis? Kruisingen (3+ armen, VRI, rotonde) gaan voor wegen.
@@ -586,6 +605,7 @@ document.addEventListener('keydown', (ev) => {
   else if (ev.key === '1' && st.net) kiesTool('kijk');
   else if (ev.key === '2' && st.net) kiesTool('weg');
   else if (ev.key === '3' && st.net) kiesTool('route');
+  else if (ev.key === '4' && st.net) kiesTool('knip');
   else if (ev.key === 'Escape') { st.tekenLijn = null; st.selectie = null; st.routes = st.routes.filter((r) => r.B); selectiePaneel(); routesPaneel(); }
   else if (ev.key === 'Enter' && st.tekenLijn) legWegAan();
   else if ((ev.ctrlKey || ev.metaKey) && ev.key === 'z') { ev.preventDefault(); ongedaan(); }

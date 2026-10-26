@@ -1,7 +1,7 @@
 // Bewerkingen op de kaart. Elke bewerking past de kaart aan en geeft een begrotingsregel terug (of null als er
 // niets veranderde). Het simnet wordt daarna door de aanroeper opnieuw gebouwd.
 import { lengteVan, dichtstbijOpLijn, knipLijn } from './geo.js';
-import { klasseVan } from './net.js';
+import { klasseVan, linkSleutel } from './net.js';
 import * as K from './kosten.js';
 
 const naamVan = (e) => e.naam || klasseVan(e.cls).naam.toLowerCase();
@@ -190,8 +190,52 @@ export function knipWeg(kaart, edgeId, s) {
   const e2 = { ...e, id: 'w' + kaart.volgnr++, a: id, pts: p2 };
   delete kaart.edges[edgeId];
   kaart.edges[e1.id] = e1; kaart.edges[e2.id] = e2;
+  if (e.a !== e.b) { zetVerbodenOver(kaart, e, e1, e.a); zetVerbodenOver(kaart, e, e2, e.b); }
   for (const k of Object.keys(kaart.verboden)) if (k.includes(edgeId + ':')) delete kaart.verboden[k];
   return id;
+}
+
+// Knoop op het wegvak bij (x, y) zetten, zodat een stuk weg apart te selecteren en weg te halen is. Verandert niets
+// aan het verkeer, dus geen begrotingsregel: geeft true (of null als er geen weg is of het vlak bij een eind ligt).
+export function zetKnoop(kaart, x, y, r) {
+  let be = null, bs = null, bd = r;
+  for (const e of Object.values(kaart.edges)) { const p = dichtstbijOpLijn(e.pts, x, y); if (p.d < bd) { bd = p.d; be = e; bs = p; } }
+  if (!be || bs.s < 3 || bs.s > lengteVan(be.pts) - 3) return null;
+  knipWeg(kaart, be.id, bs.s);
+  return true;
+}
+
+// Knoop tussen precies twee gelijke wegvakken weghalen: die worden weer één. Geeft true, of null als dat niet kan.
+export function haalKnoopWeg(kaart, nodeId) {
+  const n = kaart.nodes[nodeId];
+  if (!n || n.ctrl !== 'voorrang') return null;
+  const aan = Object.values(kaart.edges).filter((e) => e.a === nodeId || e.b === nodeId);
+  if (aan.length !== 2 || aan.some((e) => e.a === e.b)) return null;
+  const draai = (e) => ({ ...e, a: e.b, b: e.a, pts: [...e.pts].reverse(), lanesF: e.lanesB, lanesB: e.lanesF });
+  const e1 = aan[0].b === nodeId ? aan[0] : draai(aan[0]), e2 = aan[1].a === nodeId ? aan[1] : draai(aan[1]);
+  if (e1.a === e2.b) return null;
+  if (!['cls', 'naam', 'kmh', 'lanesF', 'lanesB', 'rotonde'].every((k) => e1[k] === e2[k])) return null;
+  const id = 'w' + kaart.volgnr++;
+  const e = { ...e1, id, b: e2.b, pts: [...e1.pts, ...e2.pts.slice(1)] };
+  kaart.edges[id] = e;
+  zetVerbodenOver(kaart, aan[0], e, e.a); zetVerbodenOver(kaart, aan[1], e, e.b);
+  for (const oud of aan) {
+    delete kaart.edges[oud.id];
+    for (const k of Object.keys(kaart.verboden)) if (k.includes(oud.id + ':')) delete kaart.verboden[k];
+  }
+  delete kaart.nodes[nodeId];
+  return true;
+}
+
+// Afslagverboden bij knoop x die over wegvak 'oud' gaan, overzetten op wegvak 'nieuw' (dat ook in x eindigt).
+function zetVerbodenOver(kaart, oud, nieuw, x) {
+  const inn = (e) => linkSleutel(e.id, e.b === x ? 'f' : 'b'), uit = (e) => linkSleutel(e.id, e.a === x ? 'f' : 'b');
+  for (const k of Object.keys(kaart.verboden)) {
+    const [i, u] = k.split('>');
+    if (i !== inn(oud) && u !== uit(oud)) continue;
+    kaart.verboden[`${i === inn(oud) ? inn(nieuw) : i}>${u === uit(oud) ? uit(nieuw) : u}`] = true;
+    delete kaart.verboden[k];
+  }
 }
 
 // Nieuwe weg langs punten [[x,y],...]. Begin en eind haken aan een knoop of weg binnen 'vang' meter.
