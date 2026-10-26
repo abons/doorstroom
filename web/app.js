@@ -18,7 +18,7 @@ const schrijf = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); re
 
 const plek = lees('ds-plek') ?? { lat: 52.1561, lon: 5.3878, s: 0.5 };
 const st = {
-  proj: maakProjectie(plek.lat, plek.lon), laag: lees('ds-laag') ?? 'kaart', overlay: true,
+  proj: maakProjectie(plek.lat, plek.lon), laag: lees('ds-laag') ?? 'kaart', nacht: lees('ds-nacht') === true, overlay: true,
   kaart: null, net: null, sim: null, routes: [], selectie: null, kader: null, tekenLijn: null, muis: null, markeerBeweging: null,
 };
 view.s = plek.s;
@@ -599,6 +599,8 @@ $('drukte').oninput = (ev) => {
 $('drukte').onchange = () => { planMeting(true); bewaar(); };
 $('laag').value = st.laag;
 $('laag').onchange = (ev) => { st.laag = ev.target.value; schrijf('ds-laag', st.laag); bron(); };
+$('nacht').checked = st.nacht;
+$('nacht').onchange = (ev) => { st.nacht = ev.target.checked; schrijf('ds-nacht', st.nacht); };
 function bron() { $('bron').textContent = `Wegen © OpenStreetMap-bijdragers (ODbL)${TEGELS[st.laag] ? ' · ' + TEGELS[st.laag].bron : ''}`; }
 
 document.addEventListener('keydown', (ev) => {

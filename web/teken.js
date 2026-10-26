@@ -73,9 +73,14 @@ export function maakTekenaar(canvas) {
 
   function teken(st) {
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = st.laag === 'luchtfoto' ? '#1b1f1a' : '#e9ecef';
+    ctx.fillStyle = st.nacht ? '#0b0f14' : st.laag === 'luchtfoto' ? '#1b1f1a' : '#e9ecef';
     ctx.fillRect(0, 0, W, H);
-    if (st.proj) tegels(st.proj, st.laag);
+    if (st.proj) {
+      // Nacht: kaart omkeren (donker, kleuren blijven), luchtfoto donkerder.
+      if (st.nacht) ctx.filter = st.laag === 'kaart' ? 'invert(1) hue-rotate(180deg) brightness(0.8)' : 'brightness(0.45)';
+      tegels(st.proj, st.laag);
+      ctx.filter = 'none';
+    }
     const { net, kaart, sim } = st;
     // Gebied buiten de bbox dimmen.
     if (kaart?.grens) {
@@ -92,7 +97,7 @@ export function maakTekenaar(canvas) {
     for (const e of Object.values(kaart.edges)) {
       const breed = Math.max(2.5, (e.lanesF + e.lanesB) * STROOK * s);
       pad(e.pts);
-      ctx.strokeStyle = e.nieuw ? '#4a5a78' : st.laag === 'luchtfoto' ? 'rgba(40,44,52,0.85)' : '#5b6270';
+      ctx.strokeStyle = e.nieuw ? '#4a5a78' : st.laag === 'luchtfoto' || st.nacht ? 'rgba(40,44,52,0.85)' : '#5b6270';
       ctx.lineWidth = breed + (s > 1 ? 2 : 0); ctx.stroke();
     }
     // Doorstroom per rijrichting
