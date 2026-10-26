@@ -51,8 +51,8 @@ body.met-paneel main { right: 360px; }
 .score .groot small { color: var(--stil); }
 .cijfers { display: grid; gap: 2px; color: var(--stil); font-size: 13px; }
 .cijfers b { color: var(--tekst); font-variant-numeric: tabular-nums; }
-.gereedschap { display: flex; gap: 6px; }
-.gereedschap button { flex: 1; padding: 8px 4px; }
+.gereedschap { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.gereedschap button { padding: 8px 4px; white-space: nowrap; }
 .uitleg { color: var(--stil); font-size: 13px; }
 .uitleg:empty { display: none; }
 .kiezer { display: flex; gap: 4px; flex-wrap: wrap; margin: 2px 0 6px; }

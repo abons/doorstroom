@@ -181,12 +181,16 @@ export function maakTekenaar(canvas) {
         }
       }
     }
+    // Knopen zonder kruising (wegvakgrenzen): bij ✂ Knippen allemaal, anders alleen de einden van de geselecteerde weg.
+    const stip = (n) => { ctx.beginPath(); ctx.arc(sx(n.x), sy(n.y), 5, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#1f2328'; ctx.lineWidth = 2; ctx.stroke(); };
+    if (st.tool === 'knip') for (const N of net.nodes) if (N.arms.length === 2 && N.ctrl === 'voorrang') stip(N);
     // Selectie
     if (st.selectie?.soort === 'weg') {
       const e = kaart.edges[st.selectie.id];
       if (e) {
         pad(e.pts); ctx.strokeStyle = '#1f6feb'; ctx.lineWidth = Math.max(4, (e.lanesF + e.lanesB) * STROOK * s + 6); ctx.globalAlpha = 0.45; ctx.stroke(); ctx.globalAlpha = 1;
         pijl(e.pts, '#1f6feb');
+        stip(kaart.nodes[e.a]); stip(kaart.nodes[e.b]);
       }
     }
     if (st.selectie?.soort === 'knoop') {

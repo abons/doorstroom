@@ -158,6 +158,40 @@ await test('bewerkingen: knippen, weg tekenen, afsluiten, kosten', () => {
   assert.ok(!k.nodes.c, 'losse knoop opgeruimd');
 });
 
+await test('knippen: twee knopen zetten, stuk ertussen weghalen, knoop weer weghalen', () => {
+  const k = maak({ a: [0, 0, 'rand'], m: [0, 1000], b: [0, 2000, 'rand'], o: [500, 1000, 'rand'] }, [['a', 'm'], ['m', 'b'], ['m', 'o']]);
+  k.verboden['e0:f>e2:f'] = true; // van a linksaf naar o verboden
+  assert.equal(B.zetKnoop(k, 5, 400, 10), true);
+  assert.equal(B.zetKnoop(k, 0, 999, 10), null, 'niet vlak bij een kruising');
+  assert.equal(B.zetKnoop(k, 300, 300, 10), null, 'geen weg');
+  assert.ok(B.zetKnoop(k, 0, 600, 10));
+  assert.equal(Object.keys(k.edges).length, 5);
+  const bijM = Object.values(k.edges).find((e) => e.b === 'm');
+  assert.ok(k.verboden[`${bijM.id}:f>e2:f`], 'afslagverbod gaat mee naar het stuk bij de kruising');
+  assert.equal(Object.keys(k.verboden).length, 1);
+  const midden = Object.values(k.edges).find((e) => Math.abs(e.pts[0][1] - 400) < 1);
+  assert.equal(Math.round(lengteVanEdge(midden)), 200);
+  B.verwijderWeg(k, midden.id);
+  const net = bouwSimnet(k);
+  assert.ok(!net.links.some((L) => L.edge === midden.id));
+  // Knoop met twee gelijke wegvakken kan weer weg; daarna is het één wegvak a → m met het verbod erop.
+  const k2 = maak({ a: [0, 0, 'rand'], m: [0, 1000], o: [500, 1000, 'rand'], b: [0, 2000, 'rand'] }, [['a', 'm'], ['m', 'o'], ['m', 'b']]);
+  k2.verboden['e0:f>e1:f'] = true;
+  B.zetKnoop(k2, 0, 500, 10);
+  const knoop = Object.keys(k2.nodes).find((id) => !['a', 'm', 'o', 'b'].includes(id));
+  assert.equal(B.haalKnoopWeg(k2, 'm'), null, 'kruising blijft');
+  assert.equal(B.haalKnoopWeg(k2, knoop), true);
+  assert.equal(Object.keys(k2.edges).length, 3);
+  const heel = Object.values(k2.edges).find((e) => e.a === 'a' && e.b === 'm');
+  assert.equal(Math.round(lengteVanEdge(heel)), 1000);
+  assert.deepEqual(Object.keys(k2.verboden), [`${heel.id}:f>e1:f`]);
+  // Verschillende snelheid: knoop blijft.
+  B.zetKnoop(k2, 0, 500, 10);
+  const k3 = Object.keys(k2.nodes).find((id) => !['a', 'm', 'o', 'b'].includes(id));
+  B.zetSnelheid(k2, Object.values(k2.edges).find((e) => e.a === k3 || e.b === k3).id, 30);
+  assert.equal(B.haalKnoopWeg(k2, k3), null);
+});
+
 await test('rotonde wordt een ring: tegen de klok in, wijkt bij oprijden, beter dan voorrang bij drukte', () => {
   const k = kruis('voorrang', 'primary', 'primary');
   const v = B.zetRegeling(k, 'c', 'rotonde');
