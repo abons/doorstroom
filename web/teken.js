@@ -189,6 +189,7 @@ export function maakTekenaar(canvas) {
     // Knopen zonder kruising (wegvakgrenzen): bij ✂ Knippen allemaal, anders alleen de einden van de geselecteerde weg.
     const stip = (n) => { ctx.beginPath(); ctx.arc(sx(n.x), sy(n.y), 5, 0, 7); ctx.fillStyle = '#fff'; ctx.fill(); ctx.strokeStyle = '#1f2328'; ctx.lineWidth = 2; ctx.stroke(); };
     if (st.tool === 'knip') for (const N of net.nodes) if (N.arms.length === 2 && N.ctrl === 'voorrang') stip(N);
+    if (st.tool === 'knip' && st.knipA) { ctx.beginPath(); ctx.arc(sx(st.knipA[0]), sy(st.knipA[1]), 8, 0, 7); ctx.fillStyle = '#e5484d'; ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke(); }
     // Selectie
     if (st.selectie?.soort === 'weg') {
       const e = kaart.edges[st.selectie.id];

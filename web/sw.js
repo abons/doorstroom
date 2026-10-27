@@ -1,6 +1,6 @@
 /* Netwerk-eerst voor de app zelf (zodat een nieuwe versie direct werkt), cache als terugval: zo werkt de app ook
  * offline. Tegels en API's gaan er langs; wegennet-antwoorden (/osm, Overpass) bewaart osm.js zelf in de Cache API. */
-const VERSIE = 'v5';
+const VERSIE = 'v6';
 const SHELL = ['./', 'index.html', 'style.css', 'app.js', 'geo.js', 'net.js', 'sim.js', 'teken.js', 'osm.js', 'tegels.js', 'meet.js', 'meet-worker.js', 'bewerk.js', 'kosten.js', 'manifest.webmanifest', 'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png', 'demo/amersfoort.json'];
 
 self.addEventListener('install', (e) => {

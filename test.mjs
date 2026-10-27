@@ -192,6 +192,19 @@ await test('knippen: twee knopen zetten, stuk ertussen weghalen, knoop weer wegh
   assert.equal(B.haalKnoopWeg(k2, k3), null);
 });
 
+await test('knippen in twee klikken: van een punt tot de kruising, en tussen twee punten', () => {
+  const k = maak({ a: [0, 0, 'rand'], m: [0, 1000], b: [0, 2000, 'rand'], o: [500, 1000, 'rand'] }, [['a', 'm'], ['m', 'b'], ['m', 'o']]);
+  assert.equal(B.knipStuk(k, [0, 400], [300, 1500], 10), null, 'eind niet op een weg');
+  assert.equal(Object.keys(k.edges).length, 3, 'mislukt = kaart onveranderd');
+  assert.equal(B.knipStuk(k, [0, 400], [0, 1600], 10), null, 'kruising ertussen');
+  assert.ok(B.knipStuk(k, [0, 400], [3, 997], 10), 'tot de kruising');
+  assert.equal(Object.values(k.edges).filter((e) => e.a === 'm' || e.b === 'm').length, 2, 'stuk naar de kruising weg');
+  assert.ok(Object.values(k.edges).some((e) => Math.round(lengteVanEdge(e)) === 400), 'stuk a → 400 blijft');
+  assert.ok(B.knipStuk(k, [1, 1300], [0, 1700], 10), 'midden uit een weg');
+  assert.equal(Object.keys(k.edges).length, 4);
+  assert.ok(!bouwSimnet(k).links.some((L) => L.len > 590 && L.len < 610));
+});
+
 await test('rotonde wordt een ring: tegen de klok in, wijkt bij oprijden, beter dan voorrang bij drukte', () => {
   const k = kruis('voorrang', 'primary', 'primary');
   const v = B.zetRegeling(k, 'c', 'rotonde');

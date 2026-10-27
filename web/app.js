@@ -255,7 +255,7 @@ function paneel() {
 }
 
 function kiesTool(t) {
-  tool = t; st.tool = t; st.tekenLijn = null;
+  tool = t; st.tool = t; st.tekenLijn = null; st.knipA = null;
   document.querySelectorAll('[data-tool]').forEach((b) => b.classList.toggle('aan', b.dataset.tool === t));
   doek.classList.toggle('tekenen', t !== 'kijk');
   uitleg();
@@ -271,7 +271,7 @@ function uitleg() {
     const open = st.routes.find((r) => !r.B);
     u.textContent = open ? 'Klik nu punt B (bestemming).' : st.routes.length >= 5 ? 'Maximaal 5 routes; verwijder er eerst een.' : 'Klik punt A (vertrek) op een weg.';
   } else if (tool === 'knip') {
-    u.textContent = 'Klik op een weg om er een knoop op te zetten. Met een knoop aan elke kant kies je ☝ Selecteren, klik je het stuk ertussen aan en kies je "Wegvak weghalen". Klik op een knoop om hem weer weg te halen.';
+    u.textContent = st.knipA ? 'Klik nu het eind van het stuk (een punt op dezelfde weg of de kruising). Esc = opnieuw.' : 'Klik het begin van het stuk dat weg moet: een punt op de weg of een kruising. Daarna het eind; het stuk ertussen verdwijnt.';
   } else u.textContent = st.selectie ? '' : 'Klik op een weg of kruising om hem aan te passen. Slepen = schuiven, scrollen = zoomen.';
 }
 
@@ -297,7 +297,7 @@ function selectiePaneel() {
       <h3>Richting</h3>
       <div class="kiezer">${[['beide', 'Beide kanten'], ['heen', 'Alleen →'], ['terug', 'Alleen ←']].map(([k, t]) => `<button data-richting="${k}" class="${k === r ? 'aan' : ''}">${t}</button>`).join('')}</div>
       <div class="rij" style="margin-top:8px"><button id="afsluiten" class="klein">Wegvak weghalen</button><button data-tool="knip" class="klein">✂ Knippen</button></div>
-      <p class="stil">Weghalen = afsluiten voor auto's, van knoop tot knoop. Alleen een stuk? Zet eerst knopen met ✂ Knippen.</p>
+      <p class="stil">Weghalen = afsluiten voor auto's, van knoop tot knoop. Alleen een stuk? Kies ✂ Knippen en klik begin en eind.</p>
       <p class="stil" id="liveWeg"></p>
       <h3>Verkeersstromen</h3>
       <p class="stil" id="stromen"></p>`;
@@ -434,21 +434,13 @@ function klik(px, py) {
     }
     uitleg(); routesPaneel();
   } else if (tool === 'knip') {
-    const n = knoopOnder(px, py);
-    if (n) { if (!bewerk((k) => B.haalKnoopWeg(k, n))) meld('Deze knoop kan niet weg: de wegvakken ernaast verschillen (snelheid, stroken), of het is een kruising.', 3000); }
-    else if (!bewerk((k) => B.zetKnoop(k, x, y, 14 / view.s))) meld('Klik op een weg, niet vlak bij een kruising of knoop.', 2000);
+    if (!st.knipA) { if (B.opWeg(st.kaart, x, y, 16 / view.s)) st.knipA = [x, y]; else meld('Klik op een weg.', 2000); }
+    else {
+      const pA = st.knipA; st.knipA = null;
+      if (!bewerk((k) => B.knipStuk(k, pA, [x, y], 16 / view.s))) meld('Begin en eind moeten op dezelfde weg liggen, zonder kruising ertussen. Klik opnieuw het begin.', 4000);
+    }
+    uitleg();
   }
-}
-
-// Knoop met twee wegvakken (geen kruising) onder de muis, voor ✂ Knippen.
-function knoopOnder(px, py) {
-  let best = null, bd = 12;
-  for (const N of st.net.nodes) {
-    if (N.arms.length !== 2 || N.ctrl !== 'voorrang') continue;
-    const d = Math.hypot(T.sx(N.x) - px, T.sy(N.y) - py);
-    if (d < bd) { bd = d; best = N.id; }
-  }
-  return best;
 }
 
 // Wat ligt er onder de muis? Kruisingen (3+ armen, VRI, rotonde) gaan voor wegen.
@@ -610,7 +602,7 @@ document.addEventListener('keydown', (ev) => {
   else if (ev.key === '2' && st.net) kiesTool('weg');
   else if (ev.key === '3' && st.net) kiesTool('route');
   else if (ev.key === '4' && st.net) kiesTool('knip');
-  else if (ev.key === 'Escape') { st.tekenLijn = null; st.selectie = null; st.routes = st.routes.filter((r) => r.B); selectiePaneel(); routesPaneel(); }
+  else if (ev.key === 'Escape') { st.tekenLijn = null; st.knipA = null; uitleg(); st.selectie = null; st.routes = st.routes.filter((r) => r.B); selectiePaneel(); routesPaneel(); }
   else if (ev.key === 'Enter' && st.tekenLijn) legWegAan();
   else if ((ev.ctrlKey || ev.metaKey) && ev.key === 'z') { ev.preventDefault(); ongedaan(); }
 });
