@@ -194,15 +194,22 @@ await test('knippen: twee knopen zetten, stuk ertussen weghalen, knoop weer wegh
 
 await test('knippen in twee klikken: van een punt tot de kruising, en tussen twee punten', () => {
   const k = maak({ a: [0, 0, 'rand'], m: [0, 1000], b: [0, 2000, 'rand'], o: [500, 1000, 'rand'] }, [['a', 'm'], ['m', 'b'], ['m', 'o']]);
+  const voor = JSON.stringify(k);
   assert.equal(B.knipStuk(k, [0, 400], [300, 1500], 10), null, 'eind niet op een weg');
-  assert.equal(Object.keys(k.edges).length, 3, 'mislukt = kaart onveranderd');
+  assert.equal(JSON.stringify(k), voor, 'mislukt = kaart onveranderd (knopen, volgnr, verboden)');
   assert.equal(B.knipStuk(k, [0, 400], [0, 1600], 10), null, 'kruising ertussen');
+  assert.equal(JSON.stringify(k), voor);
   assert.ok(B.knipStuk(k, [0, 400], [3, 997], 10), 'tot de kruising');
   assert.equal(Object.values(k.edges).filter((e) => e.a === 'm' || e.b === 'm').length, 2, 'stuk naar de kruising weg');
   assert.ok(Object.values(k.edges).some((e) => Math.round(lengteVanEdge(e)) === 400), 'stuk a → 400 blijft');
   assert.ok(B.knipStuk(k, [1, 1300], [0, 1700], 10), 'midden uit een weg');
   assert.equal(Object.keys(k.edges).length, 4);
-  assert.ok(!bouwSimnet(k).links.some((L) => L.len > 590 && L.len < 610));
+  assert.ok(!Object.values(k.edges).some((e) => e.pts.some(([, y]) => y > 1301 && y < 1699)), 'stuk 1300–1700 weg');
+  // Twee eenrichtingswegen tussen dezelfde knopen: allebei weg.
+  const k2 = maak({ a: [0, 0, 'rand'], b: [0, 1000, 'rand'] }, [['a', 'b'], ['b', 'a']]);
+  for (const e of Object.values(k2.edges)) e.lanesB = 0;
+  assert.ok(B.knipStuk(k2, [0, 2], [0, 998], 10));
+  assert.equal(Object.keys(k2.edges).length, 0, 'beide richtingen weg');
 });
 
 await test('rotonde wordt een ring: tegen de klok in, wijkt bij oprijden, beter dan voorrang bij drukte', () => {

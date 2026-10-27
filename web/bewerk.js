@@ -233,23 +233,27 @@ export const opWeg = (kaart, x, y, r) => Object.values(kaart.edges).some((e) => 
 // ✂ Knippen: het stuk weg tussen twee aangeklikte punten weghalen. Een punt vlak bij een kruising of knoop pakt die
 // knoop, anders wordt de weg daar geknipt. Tussen de twee mag alleen weg liggen (geen kruising). Geeft de
 // begrotingsregel, of null (en dan is de kaart onveranderd).
-export function knipStuk(kaart, pA, pB, r) {
+export function knipStuk(kaart, pA, pB, rA, rB = rA) {
   const terug = JSON.stringify(kaart), mislukt = () => { Object.assign(kaart, JSON.parse(terug)); return null; };
-  const a = knoopBij(kaart, pA[0], pA[1], r), b = a && knoopBij(kaart, pB[0], pB[1], r);
+  const a = knoopBij(kaart, pA[0], pA[1], rA), b = a && knoopBij(kaart, pB[0], pB[1], rB);
   if (!a || !b || a === b) return mislukt();
   const aan = (id) => Object.values(kaart.edges).filter((e) => e.a === id || e.b === id);
+  // Alle ketens van a naar b: twee eenrichtingswegen tussen dezelfde knopen gaan samen weg.
+  const weg = new Set();
   for (const start of aan(a)) {
     const stuk = [start];
     for (let n = start.a === a ? start.b : start.a, e = start; ;) {
-      if (n === b) {
-        for (const x of stuk) verwijderEdge(kaart, x.id);
-        ruimKnopenOp(kaart);
-        return K.kostAfsluiten(naamVan(start));
-      }
+      if (n === b) { for (const x of stuk) weg.add(x.id); break; }
       const verder = aan(n).filter((x) => x !== e);
       if (verder.length !== 1 || kaart.nodes[n].ctrl !== 'voorrang' || stuk.length > 50) break;
       e = verder[0]; stuk.push(e); n = e.a === n ? e.b : e.a;
     }
+  }
+  if (weg.size) {
+    const naam = naamVan(kaart.edges[[...weg][0]]);
+    for (const id of weg) verwijderEdge(kaart, id);
+    ruimKnopenOp(kaart);
+    return K.kostAfsluiten(naam);
   }
   return mislukt();
 }

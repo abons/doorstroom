@@ -434,10 +434,10 @@ function klik(px, py) {
     }
     uitleg(); routesPaneel();
   } else if (tool === 'knip') {
-    if (!st.knipA) { if (B.opWeg(st.kaart, x, y, 16 / view.s)) st.knipA = [x, y]; else meld('Klik op een weg.', 2000); }
+    if (!st.knipA) { if (B.opWeg(st.kaart, x, y, 16 / view.s)) st.knipA = [x, y, 16 / view.s]; else meld('Klik op een weg.', 2000); }
     else {
       const pA = st.knipA; st.knipA = null;
-      if (!bewerk((k) => B.knipStuk(k, pA, [x, y], 16 / view.s))) meld('Begin en eind moeten op dezelfde weg liggen, zonder kruising ertussen. Klik opnieuw het begin.', 4000);
+      if (!bewerk((k) => B.knipStuk(k, pA, [x, y], pA[2], 16 / view.s))) meld('Begin en eind moeten op dezelfde weg liggen, zonder kruising ertussen. Klik opnieuw het begin.', 4000);
     }
     uitleg();
   }
