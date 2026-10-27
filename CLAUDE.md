@@ -15,7 +15,7 @@ no build. Dutch UI. Started 2026-10-25. Decisions: `design.md` → `docs/besluit
 | `web/demo/amersfoort.json` | OSM extract; the in-app demo **and** the real-data fixture of `test.mjs` |
 | `.github/workflows/pages.yml` | push to `main` → tests → `web/` on https://abons.github.io/doorstroom/ (public repo since 2026-10-25, user); no `/osm` there, so Overpass |
 | `test.mjs` | `node test.mjs` — run after any change to `net.js`/`sim.js`/`meet.js`/`bewerk.js` |
-| `serve.mjs` | static server for `web/` on 127.0.0.1:**8095** plus `/osm?bbox=` (restart it after editing); phone: `tailscale serve --bg --https=8447` → https://axel-pc.tailb59455.ts.net:8447 (tailnet only, never funnel; 2026-10-25) |
+| `serve.mjs` | static server for `web/` on 127.0.0.1:**8095** plus `/osm?bbox=` (restart it after editing); phone uses Pages — the tailscale rule :8447 was removed 2026-10-27 (user); re-add with `tailscale serve --bg --https=8447 8095`, tailnet only, never funnel |
 
 ## Rules
 
